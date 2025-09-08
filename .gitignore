@@ -37,3 +37,8 @@ override.tf.json
 terraform.rc
 
 lambda_packages/
+
+# Pytest cache files
+.pytest_cache/
+__pycache__/
+*.pyc

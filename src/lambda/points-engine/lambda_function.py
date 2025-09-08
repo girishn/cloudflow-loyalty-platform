@@ -14,7 +14,7 @@ def lambda_handler(event, context):
     print(f"Event: {json.dumps(event)}")
     
     http_method = event.get('httpMethod')
-    path_parameters = event.get('pathParameters') or {}
+    path_parameter_value = event.get('pathParameters', {}).get('proxy') or {}
     body = event.get('body')
     
     headers = {
@@ -26,7 +26,7 @@ def lambda_handler(event, context):
     
     try:
         if http_method == 'GET':
-            customer_id = path_parameters.get('customerId')
+            customer_id = path_parameter_value
             if customer_id:
                 response = get_customer_points(customer_id)
             else:
@@ -34,7 +34,7 @@ def lambda_handler(event, context):
                 
         elif http_method == 'POST':
             transaction_data = json.loads(body) if body else {}
-            action = path_parameters.get('action', 'earn')
+            action = path_parameter_value.get('action', 'earn')
             
             if action == 'earn':
                 response = earn_points(transaction_data)

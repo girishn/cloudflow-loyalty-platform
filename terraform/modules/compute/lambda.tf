@@ -59,10 +59,10 @@ resource "aws_lambda_function" "points_engine" {
   timeout         = 30
   source_code_hash = data.archive_file.points_engine.output_base64sha256
 
-  vpc_config {
-    subnet_ids         = var.private_subnets
-    security_group_ids = [var.lambda_security_group_id]
-  }
+  # vpc_config {
+  #   subnet_ids         = var.private_subnets
+  #   security_group_ids = [var.lambda_security_group_id]
+  # }
 
   environment {
     variables = {
@@ -92,10 +92,10 @@ resource "aws_lambda_function" "rewards_api" {
   timeout         = 30
   source_code_hash = data.archive_file.rewards_api.output_base64sha256
 
-  vpc_config {
-    subnet_ids         = var.private_subnets
-    security_group_ids = [var.lambda_security_group_id]
-  }
+  # vpc_config {
+  #   subnet_ids         = var.private_subnets
+  #   security_group_ids = [var.lambda_security_group_id]
+  # }
 
   environment {
     variables = {
