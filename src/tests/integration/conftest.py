@@ -1,4 +1,3 @@
-# conftest.py
 def pytest_addoption(parser):
     parser.addoption(
         "--api-url-value", action="store", default="default_value",

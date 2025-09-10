@@ -1,3 +1,6 @@
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 # Lambda Execution Role
 resource "aws_iam_role" "lambda_execution" {
   name = "${var.project_name}-${var.environment}-lambda-execution-role"
@@ -68,10 +71,11 @@ resource "aws_iam_role_policy" "lambda_s3" {
         Action = [
           "s3:GetObject",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-${var.environment}-*/*"
+          "arn:aws:s3:::${var.project_name}-loyalty-data-${var.environment}-*/*"
         ]
       }
     ]
@@ -117,6 +121,35 @@ resource "aws_iam_role_policy" "lambda_xray" {
       }
     ]
   })
+}
+
+# Generic policy for Lambda-to-Lambda invocation within project
+data "aws_iam_policy_document" "lambda_invoke_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.project_name}-${var.environment}-*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "lambda_invoke_policy" {
+  name   = "${var.project_name}-lambda-invoke-policy-${var.environment}"
+  policy = data.aws_iam_policy_document.lambda_invoke_policy.json
+}
+
+# Attach to all Lambda roles
+resource "aws_iam_role_policy_attachment" "lambda_invoke_attachments" {
+  for_each = toset([
+    aws_iam_role.lambda_execution.name,
+    # aws_iam_role.purchase_processor_role.name,
+  ])
+  
+  role       = each.value
+  policy_arn = aws_iam_policy.lambda_invoke_policy.arn
 }
 
 # IAM Role for API Gateway CloudWatch Logs

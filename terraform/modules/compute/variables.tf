@@ -1,5 +1,3 @@
-# terraform/modules/compute/variables.tf
-
 variable "project_name" {
   description = "Project name for resource naming"
   type        = string
@@ -39,4 +37,14 @@ variable "lambda_security_group_id" {
 variable "lambda_subnet_ids" {
   description = "Subnet IDs for Lambda functions"
   type        = list(string)
+}
+
+variable "s3_bucket_name" {
+  description = "Name of the S3 bucket for data storage"
+  type        = string
+}
+
+variable "s3_bucket_arn" {
+  description = "ARN of the S3 bucket for data storage"
+  type        = string
 }

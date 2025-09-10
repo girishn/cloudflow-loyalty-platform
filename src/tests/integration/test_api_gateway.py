@@ -1,4 +1,3 @@
-# tests/integration/test_api_gateway.py
 import requests
 import pytest
 import boto3

@@ -1,5 +1,3 @@
-# src/lambda/rewards-api/lambda_function.py
-
 import json
 import boto3
 import os

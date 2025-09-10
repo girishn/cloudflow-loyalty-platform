@@ -1,5 +1,4 @@
-# Replace YOUR_API_GATEWAY_URL with your actual API Gateway invoke URL
-# Format: https://xxxxxxxxxx.execute-api.region.amazonaws.com/dev
+# Replace API_URL with API Gateway invoke URL
 
 export API_URL="https://3mvwt3mo05.execute-api.us-east-1.amazonaws.com/dev"
 

@@ -17,6 +17,12 @@ data "archive_file" "rewards_api" {
   output_path = "${path.module}/../../../lambda_packages/rewards-api.zip"
 }
 
+data "archive_file" "purchase_processor" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../src/lambda/purchase-processor"
+  output_path = "${path.module}/../../../lambda_packages/purchase-processor.zip"
+}
+
 # Customer API Lambda Function
 resource "aws_lambda_function" "customer_api" {
   filename         = data.archive_file.customer_api.output_path
@@ -113,6 +119,30 @@ resource "aws_lambda_function" "rewards_api" {
 
   tags = {
     Name = "${var.project_name}-${var.environment}-rewards-api"
+  }
+}
+
+# Purchase Data Processor Lambda
+resource "aws_lambda_function" "purchase_processor" {
+
+  filename         = data.archive_file.purchase_processor.output_path
+  function_name    = "${var.project_name}-${var.environment}-purchase-processor"
+  role            = aws_iam_role.lambda_execution.arn
+  handler         = "lambda_function.lambda_handler"
+  runtime         = "python3.9"
+  timeout      = 300
+  memory_size  = 512
+  source_code_hash = data.archive_file.purchase_processor.output_base64sha256
+
+  environment {
+    variables = {
+      POINTS_ENGINE_FUNCTION = aws_lambda_function.points_engine.function_name
+      CUSTOMERS_TABLE     = aws_dynamodb_table.customers.name
+    }
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-purchase-processor"
   }
 }
 

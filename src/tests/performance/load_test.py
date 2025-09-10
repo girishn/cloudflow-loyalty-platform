@@ -1,4 +1,3 @@
-# tests/performance/load_test.py
 from locust import HttpUser, task, between
 
 class LoyaltyFlowUser(HttpUser):
