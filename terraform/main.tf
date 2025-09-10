@@ -21,15 +21,15 @@ module "compute" {
   public_subnets           = module.networking.public_subnets
   lambda_security_group_id = module.networking.lambda_security_group_id
   lambda_subnet_ids        = module.networking.private_app_subnets
+  s3_bucket_name           = module.storage.s3_bucket_name
+  s3_bucket_arn            = module.storage.s3_bucket_arn
 }
 
-# # Storage
-# module "storage" {
-#   source = "./modules/storage"
+# Storage Module
+module "storage" {
+  source = "./modules/storage"
 
-#   count = var.enable_storage ? 1 : 0
-
-#   environment  = var.environment
-#   project_name = var.project_name
-#   vpc_id       = module.networking.vpc_id
-# }
+  project_name               = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.networking.vpc_id
+}
