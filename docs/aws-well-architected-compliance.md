@@ -13,8 +13,8 @@ This loyalty platform demonstrates adherence to AWS Well-Architected Framework's
 ### Evidence in Project Structure
 ```
 terraform/
-├── modules/           # Reusable infrastructure components
-├── environments/      # Environment-specific configurations
+├── modules/          # Reusable infrastructure components
+├── environments/     # Environment-specific configurations
 └── main.tf           # Declarative infrastructure
 
 src/tests/            # Comprehensive test coverage
