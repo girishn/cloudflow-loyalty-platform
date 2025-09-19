@@ -1,44 +1,53 @@
-# System Design Document - AWS Serverless Loyalty Platform
+# System Design Document – CloudFlow Loyalty Platform
 
 ## Overview
-A serverless loyalty platform built on AWS that manages customer accounts, points accumulation/redemption, and rewards catalog.
 
-## Architecture Components
+CloudFlow Loyalty Platform is a serverless, AWS-native solution for managing customer loyalty programs. It currently supports customer account management, points accumulation/redemption, and a rewards catalog. The platform leverages AWS Lambda, API Gateway, DynamoDB, and S3, with infrastructure managed via Terraform.
+
+---
+
+## Currently Implemented
 
 ### Core Services
-- **Customer API**: Customer registration, profile management, account operations
-- **Points Engine**: Points calculation, transaction processing, balance management
-- **Rewards API**: Rewards catalog, redemption processing, availability checks
+
+- **Customer API**: Register, update, and manage customer profiles.
+- **Points Engine**: Calculate, earn, and redeem loyalty points.
+- **Rewards API**: Manage rewards catalog and redemption.
+- **Purchase Processor**: Batch process purchase data from S3 and award points.
 
 ### Infrastructure
-- **API Gateway**: REST API endpoints with authentication
-- **Lambda Functions**: Serverless compute for business logic
-- **DynamoDB**: NoSQL database for customer data, points, rewards
-- **CloudWatch**: Monitoring, logging, metrics
 
-## Data Flow Diagrams
+- **API Gateway**: RESTful API endpoints with proxy path mapping and authentication.
+- **Lambda Functions**: Stateless compute for business logic (customer, points, rewards, purchase processing).
+- **DynamoDB**: NoSQL storage for customers, points, and rewards.
+- **S3**: Storage for purchase data and deployment artifacts.
+- **CloudWatch**: Monitoring, logging, and metrics.
+- **Terraform**: Modular infrastructure as code for networking, compute, and storage.
 
-### 1. Customer Registration Flow
+### Data Flow Examples
+
+#### Customer Registration Flow
+
 ```
-Mobile App/Web → API Gateway → Customer API Lambda → DynamoDB (Customers Table)
+Mobile/Web App → API Gateway → Customer API Lambda → DynamoDB (Customers Table)
                                       ↓
                               Points Engine Lambda → DynamoDB (Points Table)
                                       ↓
                               Welcome Points Credited
 ```
 
-### 2. Points Earning Flow
+#### Points Earning Flow
+
 ```
 Transaction Event → API Gateway → Points Engine Lambda
                                         ↓
                                   Calculate Points
                                         ↓
                                   DynamoDB Update
-                                        ↓
-                              Customer Notification
 ```
 
-### 3. Rewards Redemption Flow
+#### Rewards Redemption Flow
+
 ```
 Customer Request → API Gateway → Rewards API Lambda
                                        ↓
@@ -47,13 +56,12 @@ Customer Request → API Gateway → Rewards API Lambda
                                Points Engine Lambda
                                        ↓
                            Update Points & Rewards Tables
-                                       ↓
-                              Generate Reward Code
 ```
 
-## Data Models
+### Data Models
 
-### Customer Table
+#### Customer Table
+
 ```json
 {
   "customer_id": "string (PK)",
@@ -65,7 +73,8 @@ Customer Request → API Gateway → Rewards API Lambda
 }
 ```
 
-### Points Table
+#### Points Table
+
 ```json
 {
   "customer_id": "string (PK)",
@@ -77,7 +86,8 @@ Customer Request → API Gateway → Rewards API Lambda
 }
 ```
 
-### Rewards Table
+#### Rewards Table
+
 ```json
 {
   "reward_id": "string (PK)",
@@ -90,106 +100,74 @@ Customer Request → API Gateway → Rewards API Lambda
 }
 ```
 
-## API Gateway Integration
+### API Gateway Integration
 
-The project uses **AWS API Gateway** as the external entry point for clients.
+- **Proxy Path Mapping**: API Gateway is configured with a proxy resource (`/{proxy+}`), forwarding all requests to backend Lambda functions.
+- **Authentication**: JWT tokens for customer authentication (OAuth 2.0), IAM roles for service-to-service calls.
 
-### Proxy Path Mapping
-- The API Gateway is configured with a **proxy resource** (`/{proxy+}`).
-- All incoming requests under this path are forwarded to the backend service.
-- This simplifies route management by delegating request routing and validation to the backend.
+### API Endpoints
 
-## API Endpoints
+#### Customer API
 
-### Customer API
-- `POST /customers` - Register new customer
-- `GET /customers/{id}` - Get customer profile
-- `PUT /customers/{id}` - Update customer profile
-- `GET /customers/{id}/points` - Get points balance
+- `POST /customers` – Register new customer
+- `GET /customers/{id}` – Get customer profile
+- `PUT /customers/{id}` – Update customer profile
+- `GET /customers/{id}/points` – Get points balance
 
-### Points Engine
-- `POST /points/earn` - Process points earning
-- `POST /points/redeem` - Process points redemption
-- `GET /points/{customer_id}/history` - Get transaction history
+#### Points Engine
 
-### Rewards API
-- `GET /rewards` - List available rewards
-- `GET /rewards/{id}` - Get reward details
-- `POST /rewards/{id}/redeem` - Redeem reward
+- `POST /points/earn` – Process points earning
+- `POST /points/redeem` – Process points redemption
+- `GET /points/{customer_id}/history` – Get transaction history
 
-## Security & Compliance
+#### Rewards API
 
-### Authentication
-- API Gateway with JWT tokens
-- Customer authentication via OAuth 2.0
-- Service-to-service authentication via IAM roles
+- `GET /rewards` – List available rewards
+- `GET /rewards/{id}` – Get reward details
+- `POST /rewards/{id}/redeem` – Redeem reward
 
-### Data Protection
-- Encryption at rest (DynamoDB)
-- Encryption in transit (TLS 1.2+)
-- PII data masking in logs
+### Security & Compliance
 
-## Scalability Considerations
+- **Authentication**: API Gateway with JWT tokens (OAuth 2.0), IAM roles for internal Lambda access.
+- **Data Protection**: Encryption at rest (DynamoDB), encryption in transit (TLS 1.2+), PII data masking in logs.
+- **Compliance**: Follows AWS Well-Architected Framework, least privilege IAM, no hardcoded secrets.
 
-### Performance
-- DynamoDB auto-scaling enabled
-- Lambda concurrency limits configured
-- API Gateway caching for static data
+### Scalability & Reliability
 
-### Reliability
-- Multi-AZ deployment
-- Dead letter queues for failed transactions
-- Circuit breaker pattern for external calls
+- **Performance**: DynamoDB auto-scaling, Lambda concurrency limits, API Gateway caching for static data.
+- **Reliability**: Multi-AZ deployment, dead letter queues for failed transactions.
 
-## Monitoring & Alerting
+### Monitoring & Alerting
 
-### Key Metrics
-- API response times
-- Error rates per endpoint
-- Points transaction volume
-- Customer registration rate
+- **Metrics**: API response times, error rates per endpoint, points transaction volume, customer registration rate.
+- **Alerts**: High error rates (>5%), response time degradation (>2s), DynamoDB throttling, Lambda timeout errors.
 
-### Alerts
-- High error rates (>5%)
-- Response time degradation (>2s)
-- DynamoDB throttling
-- Lambda timeout errors
+### Deployment Strategy
 
-## Deployment Strategy
+- **Environments**: Development, Staging, Production (multi-AZ, full monitoring, backup enabled).
+- **CI/CD Pipeline**: Code commit triggers tests and deployment to staging, with manual approval for production and blue-green deployment.
 
-### Environments
-- **Development**: Single region, minimal resources
-- **Staging**: Production-like setup for testing
-- **Production**: Multi-AZ, full monitoring, backup enabled
+### Disaster Recovery
 
-### CI/CD Pipeline
-1. Code commit triggers pipeline
-2. Run unit and integration tests
-3. Deploy to staging environment
-4. Run end-to-end tests
-5. Manual approval for production
-6. Deploy to production with blue-green strategy
+- **Backup**: DynamoDB point-in-time recovery, Lambda code in versioned S3 buckets, infrastructure code in version control.
+- **Recovery**: RTO: 4 hours, RPO: 1 hour, cross-region replication for critical data.
 
-## Disaster Recovery
-
-### Backup Strategy
-- DynamoDB point-in-time recovery enabled
-- Lambda code stored in versioned S3 buckets
-- Infrastructure code in version control
-
-### Recovery Procedures
-- RTO: 4 hours
-- RPO: 1 hour
-- Cross-region replication for critical data
+---
 
 ## Future Enhancements
 
-### Phase 2
-- Real-time notifications via SNS
-- Advanced analytics with Kinesis
-- Machine learning recommendations
+The following features are planned for future releases:
 
-### Phase 3
-- Multi-tenant architecture
-- Partner integration APIs
-- Mobile SDK development
+- **Real-time notifications** (SNS)
+- **Advanced analytics** (Kinesis)
+- **Machine learning recommendations**
+- **Circuit breaker pattern** for external calls
+- **Partner integration APIs**
+- **Multi-tenant architecture**
+- **Mobile SDK development**
+- **Expanded blue-green deployment automation**
+- **Additional compliance certifications**
+
+---
+
+For more details, see [aws-well-architected-compliance.md](aws-well-architected-compliance.md).
